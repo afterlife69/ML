@@ -15,9 +15,7 @@ mongoose.connect("mongodb+srv://harshith:keori69@cluster0.pmkoubt.mongodb.net/bo
 .then(()=>console.log('connected'))
 .catch((err)=>console.log(err));
 
-const openai = new OpenAI({
-    apiKey: '',
-});
+const openai = new OpenAI({});
 // login
 app.post('/login', (req,res,next) => {
     console.log('worked')
