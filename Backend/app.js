@@ -10,12 +10,14 @@ const app = express()
 app.use(bodyParser.json())
 app.use(cors())
 app.use(express.json())
-mongoose.connect("")
+mongoose.connect("mongodb+srv://harshith:keori69@cluster0.pmkoubt.mongodb.net/bootcamp?retryWrites=true&w=majority")
 .then(()=>app.listen(6969))
 .then(()=>console.log('connected'))
 .catch((err)=>console.log(err));
 
-const openai = new OpenAI({});
+const openai = new OpenAI({
+    apiKey: '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',
+});
 // login
 app.post('/login', (req,res,next) => {
     console.log('worked')
