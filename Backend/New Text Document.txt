@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="chat-area">
+
+    </div>
+
+    <div class="submit-form">
+        <div class="input">
+            <textarea name="input" id="input" cols="40" rows="3"></textarea>
+            <button id="btn">Submit</button>
+        </div>    
+    </div>    
+ 
+</body>
+</html>
