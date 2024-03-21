@@ -16,7 +16,7 @@ mongoose.connect("mongodb+srv://harshith:keori69@cluster0.pmkoubt.mongodb.net/bo
 .catch((err)=>console.log(err));
 
 const openai = new OpenAI({
-    apiKey: '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',
+    apiKey: '',
 });
 // login
 app.post('/login', (req,res,next) => {
