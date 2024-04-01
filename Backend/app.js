@@ -16,7 +16,7 @@ mongoose.connect("mongodb+srv://harshith:keori69@cluster0.pmkoubt.mongodb.net/bo
 .catch((err)=>console.log(err));
 
 const openai = new OpenAI({
-    apiKey: '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',
+    apiKey: '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',
 });
 // login
 app.post('/login', (req,res,next) => {
@@ -59,98 +59,93 @@ app.post('/text', (req,res,next) => {
 
 //chat bot
 const threadByUser = {}
-app.post('/chatbot', async (req,res,next) => {
 
-
-    console.log('chat bot activateddddd')
+let queue = []
+app.post('/chatbot', async (req, res, next) => {
+    console.log('chat bot activateddddd');
     const assistantIdToUse = "asst_FoQb7HpphIeBpcVFH2nNpFLE"; // Replace with your assistant ID
     const modelToUse = "gpt-3.5-turbo-16k"; // Specify the model you want to use
     const userId = req.body.userId; // You should include the user ID in the request
-
+  
     // Create a new thread if it's the user's first message
     if (!threadByUser[userId]) {
-        try {
+      try {
         const myThread = await openai.beta.threads.create();
         console.log("New thread created with ID: ", myThread.id, "\n");
         threadByUser[userId] = myThread.id; // Store the thread ID for this user
-        } catch (error) {
+      } catch (error) {
         console.error("Error creating thread:", error);
         res.status(500).json({ error: "Internal server error" });
         return;
-        }
+      }
     }
-
+  
     const userMessage = req.body.message;
-
-    // Add a Message to the Thread
+  
+    // Process user request one by one
     try {
-        const myThreadMessage = await openai.beta.threads.messages.create(
-        threadByUser[userId], // Use the stored thread ID for this user
+      // Add a Message to the Thread
+      const myThreadMessage = await openai.beta.threads.messages.create(
+        threadByUser[userId],
         {
-            role: "user",
-            content: userMessage,
+          role: "user",
+          content: userMessage,
         }
-        );
-        console.log("This is the message object: ", myThreadMessage, "\n");
-
-        // Run the Assistant
-        const myRun = await openai.beta.threads.runs.create(
-        threadByUser[userId], // Use the stored thread ID for this user
+      );
+      console.log("This is the message object: ", myThreadMessage, "\n");
+  
+      // Run the Assistant
+      const myRun = await openai.beta.threads.runs.create(
+        threadByUser[userId],
         {
-            assistant_id: assistantIdToUse,
-            instructions: "you are a friend that helps with user's mental health, try to make the user happy add some jokes to your response to make the conversation funny, ask the user what is up ,you will have the mental health data provided and your responsibility is to respond according to the data and comfort the user, just respond to the user_prompt thats it and reply in under 2 lines", // Your instructions here
-            tools: [
+          assistant_id: assistantIdToUse,
+          instructions: "...", // Your instructions here
+          tools: [
             { type: "code_interpreter" }, // Code interpreter tool
-            ],
+          ],
         }
-        );
-        console.log("This is the run object: ", myRun, "\n");
-
-        // Periodically retrieve the Run to check on its status
-        const retrieveRun = async () => {
-        let keepRetrievingRun;
-
-        while (myRun.status !== "completed") {
-            keepRetrievingRun = await openai.beta.threads.runs.retrieve(
-            threadByUser[userId], // Use the stored thread ID for this user
+      );
+      console.log("This is the run object: ", myRun, "\n");
+  
+      // Loop to check on run status and retrieve assistant message
+      let assistantResponse;
+      while (myRun.status !== "completed") {
+        try {
+          const retrieveRun = await openai.beta.threads.runs.retrieve(
+            threadByUser[userId],
             myRun.id
-            );
-
-            console.log(`Run status: ${keepRetrievingRun.status}`);
-
-            if (keepRetrievingRun.status === "completed") {
-            console.log("\n");
-            break;
-            }
+          );
+          console.log(`Run status: ${retrieveRun.status}`);
+          myRun = retrieveRun; // Update myRun object with latest status
+        } catch (error) {
+          console.error("Error retrieving run:", error);
+          assistantResponse = "Error processing request";
+          break;
         }
-        };
-        retrieveRun();
-
-        // Retrieve the Messages added by the Assistant to the Thread
-        const waitForAssistantMessage = async () => {
-        await retrieveRun();
-
+      }
+  
+      // Retrieve Assistant response if successful
+      if (myRun.status === "completed") {
         const allMessages = await openai.beta.threads.messages.list(
-            threadByUser[userId] // Use the stored thread ID for this user
+          threadByUser[userId]
         );
-
-        // Send the response back to the front end
-        res.status(200).json({
-            message: allMessages.data[0].content[0].text.value,
-        });
-        console.log(
-            "------------------------------------------------------------ \n"
-        );
-
-        console.log("User: ", myThreadMessage.content[0].text.value);
-        console.log("Assistant: ", allMessages.data[0].content[0].text.value);
-        };
-        waitForAssistantMessage();
+        assistantResponse = allMessages.data[0].content[0].text.value;
+      }
+  
+      // Send response back to front-end
+      res.status(200).json({ message: assistantResponse });
+      console.log(
+        "------------------------------------------------------------ \n"
+      );
+  
+      console.log("User: ", myThreadMessage.content[0].text.value);
+      console.log("Assistant: ", assistantResponse);
     } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: "Internal server error" });
+      console.error("Error:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
-});
+  });
+  
 
 app.post('/updateE', (req, res, next) => {
     let data;
